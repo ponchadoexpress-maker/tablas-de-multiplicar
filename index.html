@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Math Dash - Super Aventura</title>
+    
+    <!-- Configuración para App en iOS (iPhone / iPad) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Math Dash">
+    
+    <!-- Ícono de la app en la pantalla de inicio de iOS -->
+    <link rel="apple-touch-icon" href="https://fav.farm/🦊">
+
+    <style>
+        :root {
+            --primary: #FF007A;
+            --secondary: #00F0FF;
+            --bg: #0C091D;
+            --card: #16122C;
+            --accent: #FFE600;
+            --success: #00FF66;
+            --danger: #FF0055;
+            --purple-glow: #9D00FF;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            padding-top: max(15px, env(safe-area-inset-top));
+            padding-bottom: max(15px, env(safe-area-inset-bottom));
+            overflow-x: hidden;
+        }
+
+        .sparkle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #FFF 10%, var(--accent) 60%, transparent 100%);
+            animation: particle-pop 0.8s ease-out forwards;
+        }
+
+        @keyframes particle-pop {
+            0% { transform: scale(0) translate(0, 0); opacity: 1; }
+            100% { transform: scale(1.8) translate(var(--dx), var(--dy)); opacity: 0; }
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card);
+            border-radius: 32px;
+            padding: 22px;
+            box-shadow: 0 0 50px rgba(157, 0, 255, 0.25), 0 12px 40px rgba(0, 240, 255, 0.2);
+            text-align: center;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s ease;
+        }
+
+        .app-container.shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-12px) rotate(-1deg); }
+            40% { transform: translateX(12px) rotate(1deg); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 6px;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--secondary);
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        .btn-dad {
+            background: linear-gradient(135deg, #7C3AED, #4C1D95);
+            border: 1px solid var(--purple-glow);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(157, 0, 255, 0.4);
+        }
+
+        .btn-name {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--accent);
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .wallet-card {
+            background: linear-gradient(135deg, rgba(0, 255, 102, 0.15), rgba(0, 240, 255, 0.05));
+            border: 2px solid var(--success);
+            border-radius: 20px;
+            padding: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+        }
+
+        .wallet-title {
+            font-size: 0.8rem;
+            color: #A096D3;
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .wallet-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 4px;
+        }
+
+        .wallet-amount {
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--success);
+            text-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
+        }
+
+        .wallet-timer {
+            font-size: 0.75rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            font-weight: 800;
+            font-size: 0.95rem;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--purple-glow));
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        .diff-selector {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            gap: 4px;
+        }
+
+        .diff-btn {
+            flex: 1;
+            padding: 8px 4px;
+            background: transparent;
+            border: none;
+            color: #AAA;
+            font-weight: 800;
+            font-size: 0.8rem;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .diff-btn.active[data-diff="easy"] {
+            background: #00E676;
+            color: #000;
+            box-shadow: 0 0 12px #00E676;
+        }
+
+        .diff-btn.active[data-diff="medium"] {
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 12px var(--accent);
+        }
+
+        .diff-btn.active[data-diff="hard"] {
+            background: var(--primary);
+            color: #FFF;
+            box-shadow: 0 0 12px var(--primary);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .avatar-display {
+            font-size: 3.8rem;
+            margin: 10px 0 2px 0;
+            cursor: pointer;
+            display: inline-block;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: floating 2.5s infinite ease-in-out;
+            filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.4));
+        }
+
+        .avatar-display:active {
+            transform: scale(1.3) rotate(15deg);
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .card-question {
+            background: linear-gradient(135deg, #251B4E, #140E2D);
+            border-radius: 24px;
+            padding: 20px;
+            margin: 8px 0 16px 0;
+            font-size: 3.2rem;
+            font-weight: 900;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 25px rgba(255, 0, 122, 0.35);
+            letter-spacing: 2px;
+            position: relative;
+        }
+
+        .card-question.final-round {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(255, 230, 0, 0.5);
+            background: linear-gradient(135deg, #3B2A00, #1A1200);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-opt {
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.18);
+            color: white;
+            padding: 16px;
+            font-size: 1.6rem;
+            font-weight: 800;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-opt:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-opt.correct {
+            background: var(--success) !important;
+            color: black;
+            border-color: var(--success);
+            box-shadow: 0 0 25px var(--success), 0 6px 0 #00B347 !important;
+        }
+
+        .btn-opt.wrong {
+            background: var(--danger) !important;
+            border-color: var(--danger);
+            box-shadow: 0 0 20px var(--danger), 0 6px 0 #B3003B !important;
+        }
+
+        .btn-final-trigger {
+            width: 100%;
+            padding: 12px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--accent), #FF8800);
+            color: black;
+            font-weight: 900;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 12px;
+            box-shadow: 0 0 15px rgba(255, 230, 0, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .btn-final-trigger:disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #777;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .final-banner {
+            background: linear-gradient(135deg, var(--danger), var(--primary));
+            border-radius: 16px;
+            padding: 10px;
+            font-weight: 900;
+            font-size: 0.9rem;
+            color: white;
+            margin-bottom: 10px;
+            box-shadow: 0 0 15px var(--danger);
+            animation: pulse-banner 1s infinite alternate;
+        }
+
+        @keyframes pulse-banner {
+            from { transform: scale(0.98); }
+            to { transform: scale(1.02); }
+        }
+
+        .hint-box {
+            margin-top: 15px;
+            padding: 14px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(255, 230, 0, 0.15), rgba(255, 0, 122, 0.1));
+            border: 2px dashed var(--accent);
+            color: #FFF;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .hint-box.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .box-card {
+            background: linear-gradient(135deg, #2D1B4E, #181028);
+            border: 2px solid var(--accent);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .box-icon {
+            font-size: 5rem;
+            margin: 10px 0;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .box-icon.shake-box {
+            animation: box-shake 0.5s infinite;
+        }
+
+        @keyframes box-shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, var(--accent), #FFB700);
+            color: black;
+            border: none;
+            padding: 14px 24px;
+            font-size: 1.15rem;
+            font-weight: 900;
+            border-radius: 28px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 6px 20px rgba(255, 230, 0, 0.4);
+        }
+
+        .inventory-grid {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .inv-item {
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        .inv-item.equipped {
+            border-color: var(--secondary);
+            background: rgba(0, 240, 255, 0.2);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(12, 9, 29, 0.85);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-card {
+            background: linear-gradient(135deg, #1F173D, #120B24);
+            border: 3px solid var(--secondary);
+            box-shadow: 0 0 35px var(--secondary), 0 0 15px rgba(0, 0, 0, 0.8);
+            border-radius: 28px;
+            padding: 24px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            transform: scale(0.85);
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 3.5rem;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 12px var(--accent));
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--accent);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-body {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #E2D9FF;
+            line-height: 1.4;
+            margin-bottom: 20px;
+            white-space: pre-line;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 16px;
+            border: 2px solid var(--purple-glow);
+            background: rgba(0, 0, 0, 0.4);
+            color: #FFF;
+            font-size: 1.2rem;
+            text-align: center;
+            font-weight: 800;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-modal {
+            width: 100%;
+            padding: 12px;
+            border-radius: 18px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: transform 0.15s ease;
+        }
+
+        .btn-modal:active {
+            transform: translateY(2px);
+        }
+
+        .btn-modal-primary {
+            background: linear-gradient(135deg, var(--secondary), #00A3FF);
+            color: #000;
+        }
+
+        .btn-modal-danger {
+            background: linear-gradient(135deg, var(--primary), var(--danger));
+            color: #FFF;
+        }
+
+        .btn-modal-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: #AAA;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="sparkle-container" id="sparkle-layer"></div>
+
+<div class="app-container" id="main-app">
+
+    <div class="top-bar">
+        <button class="btn-name" onclick="openPlayerMenu()">👤 <span id="player-name-btn">Jugador</span></button>
+        <div class="stat-badge">💎 <span id="gems-count">0</span></div>
+        <div class="stat-badge">⭐ Nivel: <span id="level-display">1</span></div>
+        <button class="btn-dad" onclick="openDadPanel()">🔒 Papá</button>
+    </div>
+
+    <div class="wallet-card">
+        <div class="wallet-title">👑 Cartera de <span id="wallet-owner-name">Jugador</span></div>
+        <div class="wallet-values">
+            <div>
+                <div class="wallet-amount">$<span id="wallet-total">0.00</span></div>
+                <div style="font-size: 0.7rem; color: #BBB;">Saldo acumulado listo para cobro</div>
+            </div>
+            <div class="wallet-timer">
+                📅 Día <span id="wallet-day">1</span> de 5
+            </div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="btn-tab-game" onclick="switchTab('game')">🎮 Jugar</button>
+            <button class="tab-btn" id="btn-tab-shop" onclick="switchTab('shop')">🎁 Cajas Mágicas</button>
+        </div>
+
+        <div class="diff-selector" id="diff-selector-bar">
+            <button class="diff-btn active" data-diff="easy" onclick="setDifficulty('easy')">🌱 Fácil ($0.05)</button>
+            <button class="diff-btn" data-diff="medium" onclick="setDifficulty('medium')">⚡ Medio ($0.10)</button>
+            <button class="diff-btn" data-diff="hard" onclick="setDifficulty('hard')">🔥 PRO ($0.15)</button>
+        </div>
+    </div>
+
+    <div id="view-game" class="view-section active">
+
+        <button class="btn-final-trigger" id="btn-trigger-final" onclick="startFinalRound()" disabled>
+            🔥 Ronda Final (Req. 1000 💎)
+        </button>
+
+        <div id="final-round-banner" class="final-banner" style="display: none;">
+            ⚠️ RONDA FINAL (<span id="final-step-count">1</span>/10): ¡Responde las 10 preguntas sin fallar!
+        </div>
+
+        <div style="font-size: 0.95rem; color: var(--accent); font-weight: 800; margin-bottom: 4px;">
+            En juego hoy: $<span id="current-session-money">0.00</span>
+        </div>
+
+        <div class="avatar-display" id="current-avatar" onclick="tapAvatar()">🦊</div>
+        <div class="card-question" id="question-display">2 x 3</div>
+
+        <div class="options-grid" id="options-container"></div>
+
+        <div class="hint-box" id="hint-box">
+            <div style="color: var(--accent); font-size: 0.85rem; margin-bottom: 2px;">💡 Respuesta Correcta:</div>
+            <div id="hint-display"></div>
+        </div>
+    </div>
+
+    <div id="view-shop" class="view-section">
+        <h3>Caja Sorpresa Mágica</h3>
+        <div class="box-card">
+            <div class="box-icon" id="box-animation" onclick="openBox()">🎁</div>
+            <p style="font-weight: 600; color: #A096D3;">¡Colecciona mascotas exclusivas estilo Roblox!</p>
+            <button class="btn-action" onclick="openBox()">Abrir Caja (100 💎)</button>
+        </div>
+
+        <h4 style="margin-top: 20px; color: var(--secondary);">Mascotas de <span id="inventory-owner-name">Jugador</span></h4>
+        <div class="inventory-grid" id="inventory-container"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="app-modal">
+    <div class="modal-card">
+        <div class="modal-icon" id="modal-icon">🌟</div>
+        <div class="modal-title" id="modal-title">Atención</div>
+        <div class="modal-body" id="modal-body">Mensaje aquí</div>
+        <input type="text" class="modal-input" id="modal-input" placeholder="Escribe aquí" style="display: none;">
+        <div class="modal-buttons" id="modal-buttons"></div>
+    </div>
+</div>
+
+<script>
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+        initAudio();
+        if (!audioCtx) return;
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'wrong') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.linearRampToValueAtTime(110, now + 0.35);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'cash-register') {
+            const bell = audioCtx.createOscillator();
+            const bellGain = audioCtx.createGain();
+            bell.type = 'sine';
+            bell.frequency.setValueAtTime(1800, now);
+            bell.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+            bellGain.gain.setValueAtTime(0.3, now);
+            bellGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+            bell.connect(bellGain);
+            bellGain.connect(audioCtx.destination);
+            bell.start(now);
+            bell.stop(now + 0.6);
+
+            for (let i = 0; i < 6; i++) {
+                const coin = audioCtx.createOscillator();
+                const coinGain = audioCtx.createGain();
+                const delay = 0.08 * i;
+                coin.type = 'triangle';
+                coin.frequency.setValueAtTime(2400 + (i * 200), now + delay);
+                coinGain.gain.setValueAtTime(0.15, now + delay);
+                coinGain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+                coin.connect(coinGain);
+                coinGain.connect(audioCtx.destination);
+                coin.start(now + delay);
+                coin.stop(now + delay + 0.12);
+            }
+        } else if (type === 'pop') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        } else if (type === 'box') {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(900, now + 0.5);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.55);
+            osc.start(now);
+            osc.stop(now + 0.55);
+        }
+    }
+
+    function generateQuestionDeck(tables, maxNum, levelNum, diffName) {
+        let deck = [];
+        tables.forEach(t => {
+            for (let i = 1; i <= maxNum; i++) {
+                deck.push({
+                    op: `${t} x ${i}`,
+                    ans: t * i,
+                    hint: `${t} x ${i} = ${t * i}`,
+                    level: levelNum,
+                    diff: diffName
+                });
+            }
+        });
+        return deck.sort(() => Math.random() - 0.5);
+    }
+
+    const questionDecks = {
+        easy: generateQuestionDeck([2, 3, 4, 5], 10, 1, 'easy'),
+        medium: generateQuestionDeck([6, 7, 8], 10, 2, 'medium'),
+        hard: generateQuestionDeck([9, 10, 11, 12], 10, 3, 'hard')
+    };
+
+    let deckIndices = { easy: 0, medium: 0, hard: 0 };
+
+    const payoutRates = { easy: 0.05, medium: 0.10, hard: 0.15 };
+    const lootPool = ["🐱", "🦄", "🐉", "🤖", "🦁", "🐰", "👑", "🐼", "🦊", "🐲"];
+
+    let playerName = "";
+    let currentDiff = 'easy';
+
+    let gems = 0;
+    let inventory = ["🦊"];
+    let equippedAvatar = "🦊";
+    let currentSessionMoney = 0.00;
+    let walletTotal = 0.00;
+    let walletStartDate = new Date().toISOString();
+
+    let isFinalRound = false;
+    let finalQuestionsList = [];
+    let finalStepIndex = 0;
+
+    function getPlayerKey(name) {
+        return `player_data_${name.trim().toLowerCase()}`;
+    }
+
+    function loadPlayerData(name) {
+        if (!name || name.trim() === "") return;
+        const saved = localStorage.getItem(getPlayerKey(name));
+        if (saved) {
+            const data = JSON.parse(saved);
+            gems = data.gems || 0;
+            inventory = data.inventory || ["🦊"];
+            equippedAvatar = data.avatar || "🦊";
+            currentSessionMoney = data.sessionMoney || 0.00;
+            walletTotal = data.walletTotal !== undefined ? data.walletTotal : 0.00;
+            walletStartDate = data.walletStartDate || new Date().toISOString();
+        } else {
+            gems = 0;
+            inventory = ["🦊"];
+            equippedAvatar = "🦊";
+            currentSessionMoney = 0.00;
+            walletTotal = 0.00;
+            walletStartDate = new Date().toISOString();
+        }
+        checkWalletDays();
+    }
+
+    function saveState() {
+        if (!playerName || playerName.trim() === "") return;
+
+        const playerData = {
+            gems: gems,
+            inventory: inventory,
+            avatar: equippedAvatar,
+            sessionMoney: currentSessionMoney,
+            walletTotal: walletTotal,
+            walletStartDate: walletStartDate
+        };
+        localStorage.setItem(getPlayerKey(playerName), JSON.stringify(playerData));
+    }
+
+    function updatePlayerNameUI() {
+        const nameToDisplay = playerName.trim() || "Jugador";
+        document.getElementById('player-name-btn').innerText = nameToDisplay;
+        document.getElementById('wallet-owner-name').innerText = nameToDisplay;
+        document.getElementById('inventory-owner-name').innerText = nameToDisplay;
+    }
+
+    function promptNameInput() {
+        showCustomModal({
+            icon: "👋",
+            title: "¡BIENVENIDO/A!",
+            body: "Ingresa tu nombre para cargar tu progreso y tu cartera personal:",
+            hasInput: true,
+            inputType: "text",
+            inputPlaceholder: "Escribe tu nombre...",
+            buttons: [{
+                text: "🚀 ¡A jugar!",
+                class: "btn-modal-primary",
+                action: (val) => {
+                    const chosen = (val && val.trim() !== "") ? val.trim() : "Jugador";
+                    switchPlayerTo(chosen);
+                }
+            }]
+        });
+    }
+
+    function switchPlayerTo(newPlayerName) {
+        playerName = newPlayerName;
+        loadPlayerData(playerName);
+        saveState();
+        updatePlayerNameUI();
+        loadQuestion();
+    }
+
+    function openPlayerMenu() {
+        showCustomModal({
+            icon: "👤",
+            title: "PERFIL DE JUGADOR",
+            body: `Jugador actual: ${playerName || "Ninguno"}\n\n¿Qué deseas hacer?`,
+            buttons: [
+                {
+                    text: "🔄 Cambiar de jugador",
+                    class: "btn-modal-primary",
+                    action: () => {
+                        setTimeout(() => {
+                            showCustomModal({
+                                icon: "🔁",
+                                title: "CAMBIAR JUGADOR",
+                                body: "Ingresa el nombre del jugador para cargar su cartera y logros:",
+                                hasInput: true,
+                                inputType: "text",
+                                inputPlaceholder: "Nombre del jugador...",
+                                buttons: [
+                                    {
+                                        text: "Cargar Perfil",
+                                        class: "btn-modal-primary",
+                                        action: (val) => {
+                                            if (val && val.trim() !== "") switchPlayerTo(val.trim());
+                                        }
+                                    },
+                                    { text: "Cancelar", class: "btn-modal-cancel" }
+                                ]
+                            });
+                        }, 200);
+                    }
+                },
+                {
+                    text: "✏️ Renombrar perfil actual",
+                    class: "btn-modal-primary",
+                    action: () => {
+                        setTimeout(() => {
+                            showCustomModal({
+                                icon: "✏️",
+                                title: "RENOMBRAR PERFIL",
+                                body: "Ingresa el nuevo nombre:",
+                                hasInput: true,
+                                inputType: "text",
+                                inputValue: playerName,
+                                inputPlaceholder: "Nuevo nombre...",
+                                buttons: [
+                                    {
+                                        text: "Guardar",
+                                        class: "btn-modal-primary",
+                                        action: (val) => {
+                                            if (val && val.trim() !== "" && val.trim() !== playerName) {
+                                                localStorage.removeItem(getPlayerKey(playerName));
+                                                playerName = val.trim();
+                                                saveState();
+                                                updatePlayerNameUI();
+                                            }
+                                        }
+                                    },
+                                    { text: "Cancelar", class: "btn-modal-cancel" }
+                                ]
+                            });
+                        }, 200);
+                    }
+                },
+                { text: "Cerrar", class: "btn-modal-cancel" }
+            ]
+        });
+    }
+
+    function showCustomModal(config) {
+        playSound('pop');
+        const overlay = document.getElementById('app-modal');
+        const icon = document.getElementById('modal-icon');
+        const title = document.getElementById('modal-title');
+        const body = document.getElementById('modal-body');
+        const input = document.getElementById('modal-input');
+        const buttonsContainer = document.getElementById('modal-buttons');
+
+        icon.innerText = config.icon || "🌟";
+        title.innerText = config.title || "Math Dash";
+        body.innerText = config.body || "";
+
+        if (config.hasInput) {
+            input.style.display = 'block';
+            input.type = config.inputType || "text";
+            input.placeholder = config.inputPlaceholder || "";
+            input.value = config.inputValue || "";
+        } else {
+            input.style.display = 'none';
+        }
+
+        buttonsContainer.innerHTML = "";
+
+        if (config.buttons) {
+            config.buttons.forEach(b => {
+                const btn = document.createElement('button');
+                btn.className = `btn-modal ${b.class || 'btn-modal-primary'}`;
+                btn.innerText = b.text;
+                btn.onclick = () => {
+                    playSound('pop');
+                    overlay.classList.remove('active');
+                    if (b.action) b.action(input.value);
+                };
+                buttonsContainer.appendChild(btn);
+            });
+        }
+
+        overlay.classList.add('active');
+    }
+
+    function checkWalletDays() {
+        const start = new Date(walletStartDate);
+        const now = new Date();
+        const diffDays = Math.floor(Math.abs(now - start) / (1000 * 60 * 60 * 24)) + 1;
+
+        document.getElementById('wallet-day').innerText = Math.min(diffDays, 5);
+        document.getElementById('wallet-total').innerText = walletTotal.toFixed(2);
+    }
+
+    function triggerSparkles(x, y) {
+        const layer = document.getElementById('sparkle-layer');
+        const colors = ['#00F0FF', '#FF007A', '#FFE600', '#00FF66', '#FFFFFF'];
+
+        for (let i = 0; i < 18; i++) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.left = `${x}px`;
+            sparkle.style.top = `${y}px`;
+            sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 40 + Math.random() * 70;
+            sparkle.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+            sparkle.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+
+            layer.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 800);
+        }
+    }
+
+    function tapAvatar() {
+        playSound('pop');
+        const avatar = document.getElementById('current-avatar');
+        avatar.style.transform = 'scale(1.3) rotate(20deg)';
+        setTimeout(() => { avatar.style.transform = 'none'; }, 200);
+    }
+
+    function setDifficulty(diff) {
+        if (isFinalRound) return;
+        playSound('pop');
+        currentDiff = diff;
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.diff === diff);
+        });
+        loadQuestion();
+    }
+
+    function switchTab(tab) {
+        playSound('pop');
+        document.getElementById('view-game').classList.remove('active');
+        document.getElementById('view-shop').classList.remove('active');
+        document.getElementById('btn-tab-game').classList.remove('active');
+        document.getElementById('btn-tab-shop').classList.remove('active');
+
+        if (tab === 'game') {
+            document.getElementById('view-game').classList.add('active');
+            document.getElementById('btn-tab-game').classList.add('active');
+            document.getElementById('diff-selector-bar').style.display = 'flex';
+        } else {
+            document.getElementById('view-shop').classList.add('active');
+            document.getElementById('btn-tab-shop').classList.add('active');
+            document.getElementById('diff-selector-bar').style.display = 'none';
+            renderInventory();
+        }
+    }
+
+    function updateFinalBtnState() {
+        const btn = document.getElementById('btn-trigger-final');
+        if (gems >= 1000 && !isFinalRound) {
+            btn.disabled = false;
+            btn.innerText = "🔥 ¡Hacer Ronda Final! (1000 💎)";
+        } else {
+            btn.disabled = true;
+            btn.innerText = `🔥 Ronda Final (Req. 1000 💎) - Tienes: ${gems}💎`;
+        }
+    }
+
+    function getNextQuestion() {
+        const currentDeck = questionDecks[currentDiff];
+        let idx = deckIndices[currentDiff];
+
+        let q = currentDeck[idx];
+        deckIndices[currentDiff] = (idx + 1) % currentDeck.length;
+
+        if (deckIndices[currentDiff] === 0) {
+            questionDecks[currentDiff].sort(() => Math.random() - 0.5);
+        }
+        return q;
+    }
+
+    function startFinalRound() {
+        if (gems < 1000) return;
+
+        const displayName = playerName || "Jugador";
+
+        if (currentSessionMoney <= 0) {
+            showCustomModal({
+                icon: "🪙",
+                title: "Sin Dinero en Juego",
+                body: `${displayName}, necesitas acumular dinero jugando antes de entrar a la Ronda Final.`,
+                buttons: [{ text: "¡Entendido!", class: "btn-modal-primary" }]
+            });
+            return;
+        }
+
+        showCustomModal({
+            icon: "🔥",
+            title: "DESAFÍO RONDA FINAL",
+            body: `¿Lista/o ${displayName}?\n\n• Responde 10 multiplicaciones sin fallar.\n• Si las completas, escuchas la caja registradora y cobras $${currentSessionMoney.toFixed(2)} a tu Cartera.\n• Si te equivocas, pierdes el dinero acumulado y 1000 💎.`,
+            buttons: [
+                {
+                    text: "🚀 ¡COMENZAR!",
+                    class: "btn-modal-primary",
+                    action: () => {
+                        isFinalRound = true;
+                        finalStepIndex = 0;
+
+                        let pool = [...questionDecks[currentDiff]].sort(() => Math.random() - 0.5);
+                        finalQuestionsList = pool.slice(0, 10);
+
+                        document.getElementById('diff-selector-bar').style.display = 'none';
+                        updateFinalBtnState();
+                        loadQuestion();
+                    }
+                },
+                { text: "Ahora no", class: "btn-modal-cancel" }
+            ]
+        });
+    }
+
+    function loadQuestion() {
+        document.getElementById('gems-count').innerText = gems;
+        document.getElementById('current-avatar').innerText = equippedAvatar;
+        document.getElementById('current-session-money').innerText = currentSessionMoney.toFixed(2);
+        document.getElementById('hint-box').classList.remove('visible');
+
+        updateFinalBtnState();
+
+        const qCard = document.getElementById('question-display');
+        const banner = document.getElementById('final-round-banner');
+
+        let item;
+
+        if (isFinalRound) {
+            banner.style.display = 'block';
+            document.getElementById('final-step-count').innerText = finalStepIndex + 1;
+            qCard.classList.add('final-round');
+            item = finalQuestionsList[finalStepIndex];
+            document.getElementById('level-display').innerText = "FINAL";
+        } else {
+            banner.style.display = 'none';
+            qCard.classList.remove('final-round');
+            item = getNextQuestion();
+            document.getElementById('level-display').innerText = item.level;
+        }
+
+        qCard.innerText = item.op;
+
+        let choices = [item.ans];
+        while (choices.length < 4) {
+            let offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+            let wrong = item.ans + offset;
+            if (wrong > 0 && !choices.includes(wrong)) choices.push(wrong);
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        const container = document.getElementById('options-container');
+        container.innerHTML = "";
+        choices.forEach(val => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-opt';
+            btn.innerText = val;
+            btn.onclick = (e) => checkAnswer(val, item.ans, btn, item.hint, e);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, correct, btn, hint, event) {
+        const allButtons = document.querySelectorAll('.btn-opt');
+        allButtons.forEach(b => b.disabled = true);
+        const displayName = playerName || "Jugador";
+
+        if (selected === correct) {
+            playSound('correct');
+            btn.classList.add('correct');
+
+            const rect = btn.getBoundingClientRect();
+            triggerSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+            if (isFinalRound) {
+                finalStepIndex++;
+
+                if (finalStepIndex >= 10) {
+                    playSound('cash-register');
+
+                    gems = Math.max(0, gems - 1000);
+                    walletTotal += currentSessionMoney;
+                    saveState();
+                    checkWalletDays();
+
+                    showCustomModal({
+                        icon: "💰",
+                        title: "¡VICTORIA ÉPICA!",
+                        body: `¡FELICIDADES ${displayName.toUpperCase()}!\nCompletaste acertadamente las 10 preguntas.\n\n¡Depósito de $${currentSessionMoney.toFixed(2)} pesos cargado a tu Cartera!`,
+                        buttons: [{
+                            text: "👑 ¡EXCELENTE!",
+                            class: "btn-modal-primary",
+                            action: () => {
+                                currentSessionMoney = 0.00;
+                                isFinalRound = false;
+                                document.getElementById('diff-selector-bar').style.display = 'flex';
+                                saveState();
+                                loadQuestion();
+                            }
+                        }]
+                    });
+                } else {
+                    setTimeout(loadQuestion, 500);
+                }
+            } else {
+                currentSessionMoney += payoutRates[currentDiff];
+                gems += 50;
+                saveState();
+                setTimeout(loadQuestion, 500);
+            }
+        } else {
+            playSound('wrong');
+            btn.classList.add('wrong');
+
+            const app = document.getElementById('main-app');
+            app.classList.add('shake');
+            setTimeout(() => app.classList.remove('shake'), 400);
+
+            allButtons.forEach(b => {
+                if (parseInt(b.innerText) === correct) b.classList.add('correct');
+            });
+
+            if (isFinalRound) {
+                gems = Math.max(0, gems - 1000);
+                currentSessionMoney = 0.00;
+                isFinalRound = false;
+                saveState();
+
+                setTimeout(() => {
+                    showCustomModal({
+                        icon: "💥",
+                        title: "¡RONDA PERDIDA!",
+                        body: `Fallaste en la pregunta ${finalStepIndex + 1}.\n\n• El dinero acumulado se reinició a $0.00.\n• Perdiste 1000 💎.`,
+                        buttons: [{
+                            text: "🔄 VOLVER A INTENTAR",
+                            class: "btn-modal-danger",
+                            action: () => {
+                                document.getElementById('diff-selector-bar').style.display = 'flex';
+                                loadQuestion();
+                            }
+                        }]
+                    });
+                }, 1000);
+            } else {
+                document.getElementById('hint-display').innerText = hint;
+                document.getElementById('hint-box').classList.add('visible');
+
+                setTimeout(loadQuestion, 1200);
+            }
+        }
+    }
+
+    function openDadPanel() {
+        showCustomModal({
+            icon: "🔒",
+            title: "MODO PAPÁ",
+            body: "Ingresa el PIN de seguridad para acceder al control de pagos:",
+            hasInput: true,
+            inputType: "password",
+            inputPlaceholder: "PIN de Papá",
+            buttons: [
+                {
+                    text: "Entrar",
+                    class: "btn-modal-primary",
+                    action: (inputValue) => {
+                        if (inputValue === "1478") {
+                            setTimeout(() => {
+                                showCustomModal({
+                                    icon: "💵",
+                                    title: "PANEL DE PAGOS",
+                                    body: `Saldo acumulado de ${playerName || 'Jugador'}: $${walletTotal.toFixed(2)} pesos.\n\n¿Deseas entregar el efectivo y reiniciar la cartera de este usuario?`,
+                                    buttons: [
+                                        {
+                                            text: "✅ Pagar y Reiniciar",
+                                            class: "btn-modal-primary",
+                                            action: () => {
+                                                walletTotal = 0.00;
+                                                walletStartDate = new Date().toISOString();
+                                                saveState();
+                                                checkWalletDays();
+                                                setTimeout(() => {
+                                                    showCustomModal({
+                                                        icon: "🎉",
+                                                        title: "COBRO EXITOSO",
+                                                        body: `La cartera de ${playerName || 'Jugador'} se ha entregado y reiniciado correctamente.`,
+                                                        buttons: [{ text: "Aceptar", class: "btn-modal-primary" }]
+                                                    });
+                                                }, 200);
+                                            }
+                                        },
+                                        { text: "Cancelar", class: "btn-modal-cancel" }
+                                    ]
+                                });
+                            }, 200);
+                        } else {
+                            setTimeout(() => {
+                                showCustomModal({
+                                    icon: "❌",
+                                    title: "PIN INCORRECTO",
+                                    body: "El código ingresado no es válido.",
+                                    buttons: [{ text: "Reintentar", class: "btn-modal-danger" }]
+                                });
+                            }, 200);
+                        }
+                    }
+                },
+                { text: "Cancelar", class: "btn-modal-cancel" }
+            ]
+        });
+    }
+
+    function openBox() {
+        const displayName = playerName || "Jugador";
+        if (gems < 100) {
+            showCustomModal({
+                icon: "💎",
+                title: "GEMAS INSUFICIENTES",
+                body: `${displayName}, necesitas al menos 100 Gemas jugando para abrir esta caja.`,
+                buttons: [{ text: "¡A jugar!", class: "btn-modal-primary" }]
+            });
+            return;
+        }
+
+        gems -= 100;
+        saveState();
+        document.getElementById('gems-count').innerText = gems;
+
+        const box = document.getElementById('box-animation');
+        box.classList.add('shake-box');
+
+        setTimeout(() => {
+            box.classList.remove('shake-box');
+            playSound('box');
+            const reward = lootPool[Math.floor(Math.random() * lootPool.length)];
+            box.innerText = reward;
+
+            const rect = box.getBoundingClientRect();
+            triggerSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+            if (!inventory.includes(reward)) {
+                inventory.push(reward);
+                saveState();
+            }
+            renderInventory();
+
+            setTimeout(() => { box.innerText = "🎁"; }, 2200);
+        }, 800);
+    }
+
+    function renderInventory() {
+        const container = document.getElementById('inventory-container');
+        container.innerHTML = "";
+
+        inventory.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `inv-item ${item === equippedAvatar ? 'equipped' : ''}`;
+            div.innerText = item;
+            div.onclick = () => {
+                playSound('pop');
+                equippedAvatar = item;
+                saveState();
+                document.getElementById('current-avatar').innerText = item;
+                renderInventory();
+            };
+            container.appendChild(div);
+        });
+    }
+
+    promptNameInput();
+</script>
+
+</body>
+</html>
