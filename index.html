@@ -662,17 +662,25 @@
 </div>
 
 <script>
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
     let audioCtx = null;
 
+    // Desbloqueo optimizado de audio para iOS/Safari
     function initAudio() {
-        if (!audioCtx) audioCtx = new AudioContext();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
     }
+
+    // Escuchar cualquier interacción táctil inicial para activar Web Audio
+    window.addEventListener('touchstart', initAudio, { once: true });
+    window.addEventListener('click', initAudio, { once: true });
 
     function playSound(type) {
         initAudio();
-        if (!audioCtx) return;
+        if (!audioCtx || audioCtx.state !== 'running') return;
 
         const now = audioCtx.currentTime;
 
